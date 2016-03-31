@@ -8,3 +8,10 @@ class DeviceToken(models.Model):
 
     def __unicode__(self):
         return self.token
+
+
+class Schedule(models.Model):
+    date = models.DateField(unique=True)
+    opponent = models.CharField(max_length=256)
+    url = models.URLField(max_length=500)
+    home_game = models.BooleanField()
