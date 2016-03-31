@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from datetime import date
 import json
 
 from api.models import DeviceToken
@@ -24,5 +25,5 @@ def register(request):
 
 
 def load_state(request):
-    state = calculate_state()
+    state = calculate_state(date=date.today())
     return HttpResponse(content=json.dumps({'type': state}), content_type='application/json')
