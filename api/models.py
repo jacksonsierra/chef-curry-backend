@@ -10,7 +10,7 @@ class DeviceToken(models.Model):
         return self.token
 
 
-class Schedule(models.Model):
+class Game(models.Model):
     date = models.DateField(unique=True)
     opponent = models.CharField(max_length=256)
     url = models.URLField(max_length=500)
@@ -24,6 +24,7 @@ class Schedule(models.Model):
 
 
 class Stats(models.Model):
+    game = models.ForeignKey('api.Game')
     created_date = models.DateTimeField(auto_now_add=True)
     minutes_elapsed = models.PositiveSmallIntegerField(null=True)
     minutes_played = models.PositiveSmallIntegerField(null=True)
