@@ -93,4 +93,21 @@ def is_current_stat_greater_than_before(date, stat, stat_threshold, minute_thres
     return (current_stat - stat_threshold) >= prior_stat
 
 
+def send_notification(state):
+    device_tokens = DeviceToken.objects.values_list('token', flat=True)
+    payload = get_payload(state)
 
+    cert = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), config('CERT_PEM'))
+    key = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), config('KEY_PEM'))
+
+    apns = APNs(use_sandbox=True, cert_file=cert, key_file=key)
+
+    for token in device_tokens:
+        apns.gateway_server.send_notification(token, payload)
+
+
+def get_payload(state):
+    if state == 'god' or state == 'hot':
+        return Payload(alert=constants.APNs_messages[state], custom={'type': state})
+
+    return Payload(custom={'type': state})
