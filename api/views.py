@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from datetime import date
+import sys
 import json
 
 from api.models import DeviceToken, Game
