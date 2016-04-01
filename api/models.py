@@ -15,8 +15,9 @@ class Schedule(models.Model):
     opponent = models.CharField(max_length=256)
     url = models.URLField(max_length=500)
     home_game = models.BooleanField()
-    started = models.BooleanField(default=False)
-    finished = models.BooleanField(default=False)
+    has_started = models.BooleanField(default=False)
+    has_finished = models.BooleanField(default=False)
+    state = models.CharField(max_length=256, default='none')
 
     def __unicode__(self):
         return self.url
