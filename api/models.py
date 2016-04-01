@@ -46,3 +46,6 @@ class Stats(models.Model):
     blocks_against = models.PositiveSmallIntegerField(null=True)
     personal_fouls = models.PositiveSmallIntegerField(null=True)
     points = models.PositiveSmallIntegerField(null=True)
+
+    def __unicode__(self):
+        return str(self.game_id) + ' ' + str(self.created_date)
