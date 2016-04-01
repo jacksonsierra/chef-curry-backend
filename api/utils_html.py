@@ -1,32 +1,30 @@
 from pyquery import PyQuery as pq
-import urllib2
+from requests import request
 
 import api.constants as constants
 
 
 def parse_html(url):
-    html = urllib2.urlopen(url)
-    jQuery = pq(html.read())
+    html = request(method='get', url=url)
+    jQuery = pq(html.text)
     main = jQuery(constants.id_main)
 
-    current_stats = {}
     has_started = not main.find(constants.id_pregame)
     has_finished = bool(main.find(constants.id_final))
 
-    if not has_started:
-        return current_stats, has_started, has_finished
+    if not has_started or has_finished:
+        return None, has_started, has_finished
 
     try:
-        game_clock = main.find(constants.id_live + ' ' + constants.id_game_clock).text().split(' ')
         html_stats = main.find(constants.id_steph_curry_label).parent()
+        game_clock = main.find(constants.id_game_clock).text().split(' ')
     except:
-        return current_stats, has_started, has_finished
+        return None, has_started, has_finished
 
-    if game_clock[0] in constants.game_stoppages:
-        return
+    corrected_game_clock = correct_game_clock(game_clock=game_clock)
 
     current_stats = parse_html_stats(html=html_stats)
-    current_stats['minutes_elapsed'] = parse_html_time(html=game_clock)
+    current_stats['minutes_elapsed'] = parse_html_time(html=corrected_game_clock)
 
     return current_stats, has_started, has_finished
 
@@ -84,6 +82,14 @@ def parse_html_stats(html):
     result['points'] = parse_html_number(value=points_html)
 
     return result
+
+
+def correct_game_clock(game_clock):
+    if game_clock[0] == 'End':
+        return ['0:00', game_clock[1]]
+
+    if game_clock[0] == 'Half':
+        return ['0:00', '2nd']
 
 
 def parse_html_time(html):
