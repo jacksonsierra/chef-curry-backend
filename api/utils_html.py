@@ -12,14 +12,18 @@ def parse_html(url):
     has_started = not main.find(constants.id_pregame)
     has_finished = bool(main.find(constants.id_final))
 
-    if not has_started or has_finished:
+    if not has_started:
         return None, has_started, has_finished
 
     try:
         html_stats = main.find(constants.id_steph_curry_label).parent()
-        game_clock = main.find(constants.id_game_clock).text().split(' ')
     except:
         return None, has_started, has_finished
+
+    if has_finished:
+        game_clock = main.find(constants.id_final_clock).text().split('-')
+    else:
+        game_clock = main.find(constants.id_game_clock).text().split(' ')
 
     corrected_game_clock = correct_game_clock(game_clock=game_clock)
 
@@ -85,11 +89,19 @@ def parse_html_stats(html):
 
 
 def correct_game_clock(game_clock):
-    if game_clock[0] == 'End':
-        return ['0:00', game_clock[1]]
+    time = game_clock[0].strip()
+    try:
+        quarter = game_clock[1].strip()
+    except:
+        if time == 'Final':
+            return ['0:00', '4th']
 
-    if game_clock[0] == 'Half':
-        return ['0:00', '2nd']
+        if time == 'Half':
+            return ['0:00', '2nd']
+    else:
+        if time in ('End', 'Final'):
+            return ['0:00', quarter]
+        return game_clock
 
 
 def parse_html_time(html):
@@ -116,7 +128,7 @@ def parse_html_string(value):
 
 def parse_html_number(value):
     if not value:
-        return
+        return 0
 
     try:
         result = value.text()
@@ -126,7 +138,7 @@ def parse_html_number(value):
     try:
         result = int(result)
     except:
-        return
+        return 0
 
     return result
 
