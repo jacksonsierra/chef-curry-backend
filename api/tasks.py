@@ -27,19 +27,20 @@ def get_stats():
     if has_finished and game.has_finished:
         return
 
-    current_stats['game'] = game
-    Stats.objects.create(**current_stats)
+    if current_stats:
+        current_stats['game'] = game
+        Stats.objects.create(**current_stats)
 
-    new_state = calculate_state(date=today)
+    new_state = calculate_state(game=game)
 
     if has_started and not game.has_started:
-        Game.objects.filter(date=today).update(has_started=has_started)
+        Game.objects.filter(id=game.id).update(has_started=has_started)
 
     if has_finished and not game.has_finished:
-        Game.objects.filter(date=today).update(has_finished=has_finished)
+        Game.objects.filter(id=game.id).update(has_finished=has_finished)
 
     if new_state != game.state:
-        Game.objects.filter(date=today).update(state=new_state)
+        Game.objects.filter(id=game.id).update(state=new_state)
         send_notification(state=new_state)
 
 
