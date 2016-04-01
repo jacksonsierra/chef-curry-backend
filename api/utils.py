@@ -1,22 +1,21 @@
+from datetime import datetime, timedelta
+from apns import APNs, Frame, Payload
+from decouple import config
 
-
-from api.models import Schedule, Stats
+from api.models import Schedule, Stats, DeviceToken
+import api.constants as constants
 
 
 def calculate_state(date):
     try:
-        s = Schedule.objects.get(date=date)
-        has_game_started = s.started
-        has_game_finished = s.finished
+        game = Schedule.objects.get(date=date)
     except Schedule.DoesNotExist:
         return 'none'
-    except KeyError:
+
+    if not game.has_started:
         return 'none'
 
-    if not has_game_started:
-        return 'none'
-
-    if has_game_finished:
+    if game.has_finished:
         return 'none'
 
     if is_god_mode(date=date):
