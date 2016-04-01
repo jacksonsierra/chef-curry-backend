@@ -26,7 +26,6 @@ class Schedule(models.Model):
 class Stats(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     minutes_elapsed = models.PositiveSmallIntegerField(null=True)
-    seconds_elapsed = models.PositiveIntegerField(null=True)
     minutes_played = models.PositiveSmallIntegerField(null=True)
     seconds_played = models.PositiveSmallIntegerField(null=True)
     field_goals_made = models.PositiveSmallIntegerField(null=True)
