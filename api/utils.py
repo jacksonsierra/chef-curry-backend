@@ -31,21 +31,66 @@ def calculate_state(date):
 
 
 def is_god_mode(date):
-    # filter Stats on created_date being date, and minutes_elapsed <= minute threshold in constants.py
-    # order by created_date and take max record
-    # return if points > point threshold in constants.py
+    try:
+        points_scored = Stats.objects.filter(
+            created_date__range=(date, date + timedelta(days=1)),
+            minutes_elapsed__lte=constants.god_mode_minute_threshold
+        ).order_by(
+            '-created_date'
+        )[0].points
+    except Stats.DoesNotExist:
+        return False
+    except IndexError:
+        return False
+    except KeyError:
+        return False
+
+    return points_scored >= constants.god_mode_point_threshold
 
 
 def is_hot(date):
-    # filter Stats on created_date being date
-    # order by created_date and take max record
-
-    # find min created_date record within 5 minutes of max minutes elapsed
-    # compare if three_pointers_made from max - 2 >= three_pointers_made from min
+    return is_current_stat_greater_than_before(
+        date=date,
+        stat='three_pointers_made',
+        stat_threshold=constants.hot_mode_three_pointer_threshold,
+        minute_threshold=constants.hot_mode_minute_threshold
+    )
 
 
 def has_made_three_pointer(date):
-    # filter Stats on created_date being date
-    # order by created_date and take max two records
+    return is_current_stat_greater_than_before(
+        date=date,
+        stat='three_pointers_made',
+        stat_threshold=constants.shot_mode_three_pointer_threshold,
+        minute_threshold=constants.shot_mode_minute_threshold
+    )
 
-    # compare if three_pointers_made from max - 1 >= three_pointers_made from min
+
+def is_current_stat_greater_than_before(date, stat, stat_threshold, minute_threshold):
+    try:
+        current_stats = Stats.objects.filter(
+            created_date__range=(date, date + timedelta(days=1))
+        ).order_by(
+            '-created_date'
+        )[0]
+        current_stat = current_stats[stat]
+        minutes_elapsed = current_stats['minutes_elapsed']
+
+        prior_stats = Stats.objects.filter(
+            created_date__range=(date, date + timedelta(days=1)),
+            minutes_elapsed__gte=(minutes_elapsed - minute_threshold)
+        ).order_by(
+            'created_date'
+        )[0]
+        prior_stat = prior_stats[stat]
+    except Stats.DoesNotExist:
+        return False
+    except IndexError:
+        return False
+    except KeyError:
+        return False
+
+    return (current_stat - stat_threshold) >= prior_stat
+
+
+
