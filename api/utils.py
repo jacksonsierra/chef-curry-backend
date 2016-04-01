@@ -1,16 +1,13 @@
-from datetime import timedelta
 from apns import APNs, Payload
 from decouple import config
 import os
 
-from api.models import Game, Stats, DeviceToken
+from api.models import Stats, DeviceToken
 import api.constants as constants
 
 
-def calculate_state(date):
-    try:
-        game = Game.objects.get(date=date)
-    except Game.DoesNotExist:
+def calculate_state(game):
+    if not game:
         return 'none'
 
     if not game.has_started:
@@ -19,77 +16,72 @@ def calculate_state(date):
     if game.has_finished:
         return 'none'
 
-    if is_god_mode(date=date):
+    if is_god_mode(game_id=game.id):
         return 'god'
 
-    if is_hot(date=date):
+    if is_hot(game_id=game.id):
         return 'hot'
 
-    if has_made_three_pointer(date=date):
+    if has_made_three_pointer(game_id=game.id):
         return 'shot'
 
     return 'none'
 
 
-def is_god_mode(date):
+def is_god_mode(game_id):
     try:
         points_scored = Stats.objects.filter(
-            created_date__range=(date, date + timedelta(days=1)),
+            game_id=game_id,
             minutes_elapsed__lte=constants.god_mode_minute_threshold
         ).order_by(
             '-created_date'
         )[0].points
-    except Stats.DoesNotExist:
-        return False
-    except IndexError:
-        return False
-    except KeyError:
+    except:
         return False
 
     return points_scored >= constants.god_mode_point_threshold
 
 
-def is_hot(date):
+def is_hot(game_id):
     return is_current_stat_greater_than_before(
-        date=date,
+        game_id=game_id,
         stat='three_pointers_made',
         stat_threshold=constants.hot_mode_three_pointer_threshold,
         minute_threshold=constants.hot_mode_minute_threshold
     )
 
 
-def has_made_three_pointer(date):
+def has_made_three_pointer(game_id):
     return is_current_stat_greater_than_before(
-        date=date,
+        game_id=game_id,
         stat='three_pointers_made',
         stat_threshold=constants.shot_mode_three_pointer_threshold,
         minute_threshold=constants.shot_mode_minute_threshold
     )
 
 
-def is_current_stat_greater_than_before(date, stat, stat_threshold, minute_threshold):
+def is_current_stat_greater_than_before(game_id, stat, stat_threshold, minute_threshold):
     try:
         current_stats = Stats.objects.filter(
-            created_date__range=(date, date + timedelta(days=1))
+            game_id=game_id
         ).order_by(
             '-created_date'
         )[0]
-        current_stat = current_stats[stat]
-        minutes_elapsed = current_stats['minutes_elapsed']
+        current_stat = getattr(current_stats, stat)
+        minutes_elapsed = getattr(current_stats, 'minutes_elapsed')
+    except:
+        return False
 
+    try:
         prior_stats = Stats.objects.filter(
-            created_date__range=(date, date + timedelta(days=1)),
+            game_id=game_id,
             minutes_elapsed__gte=(minutes_elapsed - minute_threshold)
         ).order_by(
             'created_date'
         )[0]
-        prior_stat = prior_stats[stat]
-    except Stats.DoesNotExist:
-        return False
-    except IndexError:
-        return False
-    except KeyError:
-        return False
+        prior_stat = getattr(prior_stats, stat)
+    except:
+        prior_stat = 0
 
     return (current_stat - stat_threshold) >= prior_stat
 
