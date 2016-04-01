@@ -3,7 +3,7 @@ from celery.task.schedules import crontab
 from celery.utils.log import get_task_logger
 from datetime import date
 
-from api.models import Schedule, Stats
+from api.models import Game, Stats
 from api.utils_html import parse_html
 from api.utils import calculate_state, send_notification
 
@@ -15,8 +15,8 @@ logger = get_task_logger(__name__)
 def get_stats():
     today = date.today()
     try:
-        game = Schedule.objects.get(date=today)
-    except Schedule.DoesNotExist:
+        game = Game.objects.get(date=today)
+    except Game.DoesNotExist:
         return
 
     current_stats, has_started, has_finished = parse_html(url=game.url)
@@ -27,18 +27,19 @@ def get_stats():
     if has_finished and game.has_finished:
         return
 
-    Stats.objects.create(current_stats)
+    current_stats['game'] = game
+    Stats.objects.create(**current_stats)
 
     new_state = calculate_state(date=today)
 
     if has_started and not game.has_started:
-        Schedule.objects.filter(date=today).update(has_started=has_started)
+        Game.objects.filter(date=today).update(has_started=has_started)
 
     if has_finished and not game.has_finished:
-        Schedule.objects.filter(date=today).update(has_finished=has_finished)
+        Game.objects.filter(date=today).update(has_finished=has_finished)
 
     if new_state != game.state:
-        Schedule.objects.filter(date=today).update(state=new_state)
+        Game.objects.filter(date=today).update(state=new_state)
         send_notification(state=new_state)
 
 

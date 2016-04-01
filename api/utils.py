@@ -2,14 +2,14 @@ from datetime import datetime, timedelta
 from apns import APNs, Frame, Payload
 from decouple import config
 
-from api.models import Schedule, Stats, DeviceToken
+from api.models import Game, Stats, DeviceToken
 import api.constants as constants
 
 
 def calculate_state(date):
     try:
-        game = Schedule.objects.get(date=date)
-    except Schedule.DoesNotExist:
+        game = Game.objects.get(date=date)
+    except Game.DoesNotExist:
         return 'none'
 
     if not game.has_started:

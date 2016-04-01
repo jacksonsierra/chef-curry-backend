@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import date
 import json
 
-from api.models import DeviceToken, Schedule
+from api.models import DeviceToken, Game
 
 
 @csrf_exempt
@@ -26,9 +26,9 @@ def register(request):
 def load_state(request):
     today = date.today()
     try:
-        game = Schedule.objects.get(date=today)
+        game = Game.objects.get(date=today)
         result = {'type': game.state}
-    except Schedule.DoesNotExist:
+    except Game.DoesNotExist:
         result = {'type': 'none'}
     except KeyError:
         result = {'type': 'none'}
