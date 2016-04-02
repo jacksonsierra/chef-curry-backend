@@ -1,6 +1,7 @@
-from apns import APNs, Payload
+from apns import APNs, Payload, Frame
 from decouple import config
 import os
+import time
 
 from api.models import Stats, DeviceToken
 import api.constants as constants
@@ -90,13 +91,16 @@ def send_notification(state):
     device_tokens = DeviceToken.objects.values_list('token', flat=True)
     payload = get_payload(state)
 
-    cert = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), config('CERT_PEM'))
-    key = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), config('KEY_PEM'))
+    apns = APNs(cert_file=config('CERT_PEM'), key_file=config('KEY_PEM'), enhanced=True)
+    frame = Frame()
 
-    apns = APNs(use_sandbox=True, cert_file=cert, key_file=key)
+    for index, token in enumerate(device_tokens):
+        identifier = index + 1
+        expiry = time.time() + 3600
+        priority = 10
+        frame.add_item(token, payload, identifier, expiry, priority)
 
-    for token in device_tokens:
-        apns.gateway_server.send_notification(token, payload)
+    apns.gateway_server.send_notification_multiple(frame)
 
 
 def get_payload(state):

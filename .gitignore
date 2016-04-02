@@ -36,6 +36,8 @@ venv/
 
 # Generated when running celery beat
 celerybeat-schedule.db
+celerybeat-schedule
+celerybeat.pid
 
 # Unit test / coverage reports
 .coverage
